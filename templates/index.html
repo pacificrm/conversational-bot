@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Chatbot</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #89f7fe, #66a6ff);
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      h1 {
+        text-align: center;
+        color: #ffffff;
+        margin: 0;
+        padding: 10px;
+        background: #66a6ff;
+        border-radius: 10px 10px 0 0;
+      }
+
+      #chatbox {
+        width: 100%;
+        max-width: 600px;
+        height: 90vh; /* Limit height */
+        background: #ffffff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #messages {
+        flex: 1;
+        padding: 50px;
+        overflow-y: auto; /* Enable scrolling */
+        background: #f9f9f9;
+        border-bottom: 2px solid #66a6ff;
+        max-height: 70%; /* Set max height */
+        display: flex;
+        flex-direction: column; /* Stack messages vertically */
+      }
+
+      .message {
+        opacity: 0; /* Initial state for animation */
+        transform: translateY(20px);
+        transition: all 0.5s ease-in-out;
+        padding: 15px;
+        border-radius: 10px;
+        background: #f1f1f1; /* Light grey background */
+        margin: 10px 0;
+        word-wrap: break-word;
+        white-space: pre-wrap; /* Preserve spaces and new lines */
+        display: inline-block;
+        line-height: 1.5;
+      }
+
+      .visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .user-message {
+        text-align: right;
+        background: #007bff; /* Blue background for user */
+        color: white;
+        font-weight: bold;
+        margin-left: auto;
+      }
+
+      .bot-message {
+        text-align: left;
+        background: #e1e1e1; /* Light grey background for bot */
+        color: #333;
+        font-style: italic;
+        margin-right: auto;
+      }
+
+      #input-area {
+        display: flex;
+        border-top: 2px solid #66a6ff;
+        background: #e3f2fd;
+      }
+
+      #user-input {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        outline: none;
+        font-size: 16px;
+      }
+
+      #send-btn {
+        padding: 15px 20px;
+        background: #66a6ff;
+        border: none;
+        outline: none;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      #send-btn:hover {
+        background: #5598e6;
+      }
+
+      #messages::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      #messages::-webkit-scrollbar-thumb {
+        background: #66a6ff;
+        border-radius: 10px;
+      }
+
+      #messages::-webkit-scrollbar-track {
+        background: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chatbox">
+      <h1>Conversational Bot (LLMs)</h1>
+      <!-- Ensure heading is visible -->
+      <div id="messages"></div>
+      <div id="input-area">
+        <input
+          type="text"
+          id="user-input"
+          placeholder="Type your message here..."
+          onkeypress="handleKeyPress(event)"
+        />
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <script>
+      const messagesContainer = document.getElementById("messages");
+
+      function sendMessage() {
+        const userInput = document.getElementById("user-input");
+        const userMessage = userInput.value.trim();
+        if (!userMessage) return;
+
+        addMessage(userMessage, "user");
+        userInput.value = "";
+
+        fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: userMessage }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const botResponse =
+              data.response || "I'm sorry, I didn't understand that.";
+            addMessage(botResponse, "bot");
+          })
+          .catch(() => {
+            addMessage("An error occurred. Please try again later.", "bot");
+          });
+      }
+
+      function addMessage(text, sender) {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add(
+          "message",
+          sender === "user" ? "user-message" : "bot-message"
+        );
+        messageDiv.textContent = text;
+
+        // Dynamically adjust the width based on message length
+        const messageLength = text.length;
+        const widthPercentage = Math.min(100, 5 + messageLength * 0.8); // Adjust the multiplier to control width growth
+        messageDiv.style.width = `${widthPercentage}%`;
+
+        messagesContainer.appendChild(messageDiv);
+
+        // Debugging: Check message content
+        console.log("Added message:", text, "Sender:", sender);
+
+        // Animate bot messages with fading effect
+        setTimeout(() => {
+          messageDiv.classList.add("visible");
+        }, 100);
+
+        // Scroll to the bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+    </script>
+  </body>
+</html>

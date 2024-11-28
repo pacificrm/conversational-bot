@@ -1,0 +1,14 @@
+flask
+langchain
+bitsandbytes
+accelerate
+transformers
+datasets
+loralib
+sentencepiece
+pypdf
+sentence_transformers
+unstructured
+tokenizers
+xformers
+pinecone-client
